@@ -6,3 +6,4 @@ Design a C program to measure the effect of cache memory on program execution sp
 3. How long does a reference to main memory take to complete?
 4. How long does a reference that can be satisfied from cache take to complete?
 
+Working on this
