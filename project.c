@@ -25,6 +25,8 @@ Sources Used:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
 
 char* read(char* string)
 {
@@ -94,17 +96,63 @@ char* read(char* string)
     exit(EXIT_SUCCESS);
 }
 
+int readAndWriteFileByBlock(int block){
+	FILE *in, *out;
+	int blockSize = block;
+	unsigned char *buffer = NULL;
+	buffer = (unsigned char*) malloc(blockSize);
+	size_t bufSize;
+	
+	if ((in=fopen("readIn.txt", "rb")) == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+	
+	if ((out=fopen("writeOut.txt", "wb")) == NULL){
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+	
+	while((bufSize = fread(buffer, sizeof(unsigned char), blockSize, in)) > 0) {
+		fwrite(buffer, sizeof(unsigned char), bufSize, out);
+	}
+	fclose(out);
+	fclose(in);
+	
+	return 0;
+	
+}
 
-int main(void){
+
+int main(int argc, char *argv[]){
+
+	struct timespec ts_begin, ts_end;
+	double elapsed1;
 
 	char* cache_block_size = read("cache_alignment");
 	printf("%s", cache_block_size);
 	
 	char* cache_size = read("cache size");
 	printf("%s", cache_size);
+	
+	int intarr[15] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
+	for (int i = 0; i < sizeof(intarr); i++){
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		readAndWriteFileByBlock(intarr[i]);
+		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+		
+		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/ 1000000000.0);
+		
+		printf("Block Size %d: %f\n", intarr[i], elapsed1);
+		
+		if (i == 15){
+			break;
+		}
+	}
+	
 
 }
-
 
 
 
