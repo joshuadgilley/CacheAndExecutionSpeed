@@ -128,6 +128,7 @@ int main(int argc, char *argv[]){
 
 	struct timespec ts_begin, ts_end;
 	double elapsed1;
+	int *arr;
 
 	char* cache_block_size = read("cache_alignment");
 	printf("%s", cache_block_size);
@@ -150,6 +151,45 @@ int main(int argc, char *argv[]){
 			break;
 		}
 	}
+	
+	printf("\n\n\n");
+	
+	
+	/////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	// New Comparing multiple arrays like assignment suggests (getting good results)
+	long length = (1024 * 1024) -1;
+	
+	for (int j = 0; j < sizeof(intarr); j++){
+	
+		arr = malloc(sizeof(int) * (1024 * 1024));
+	
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
+			int val = arr[(i *16) & length]++;
+		}
+		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
+		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
+		
+		
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
+			arr[(0 *16) & length]++;
+		}
+		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
+		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
+		
+		if (j == 15){
+			break;
+		}
+	}
+	/////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	
 	
 
 }
