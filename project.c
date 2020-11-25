@@ -96,32 +96,7 @@ char* read(char* string)
     exit(EXIT_SUCCESS);
 }
 
-int readAndWriteFileByBlock(int block){
-	FILE *in, *out;
-	int blockSize = block;
-	unsigned char *buffer = NULL;
-	buffer = (unsigned char*) malloc(blockSize);
-	size_t bufSize;
-	
-	if ((in=fopen("readIn.txt", "rb")) == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-	
-	if ((out=fopen("writeOut.txt", "wb")) == NULL){
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-	
-	while((bufSize = fread(buffer, sizeof(unsigned char), blockSize, in)) > 0) {
-		fwrite(buffer, sizeof(unsigned char), bufSize, out);
-	}
-	fclose(out);
-	fclose(in);
-	
-	return 0;
-	
-}
+
 
 
 int main(int argc, char *argv[]){
@@ -130,29 +105,6 @@ int main(int argc, char *argv[]){
 	double elapsed1;
 	int *arr;
 
-	char* cache_block_size = read("cache_alignment");
-	printf("%s", cache_block_size);
-	
-	char* cache_size = read("cache size");
-	printf("%s", cache_size);
-	
-	int intarr[15] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
-	for (int i = 0; i < sizeof(intarr); i++){
-		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		readAndWriteFileByBlock(intarr[i]);
-		clock_gettime(CLOCK_MONOTONIC, &ts_end);
-		
-		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/ 1000000000.0);
-		
-		printf("Block Size %d: %f\n", intarr[i], elapsed1);
-		
-		if (i == 15){
-			break;
-		}
-	}
-	
-	printf("\n\n\n");
 	
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -160,35 +112,50 @@ int main(int argc, char *argv[]){
 	// New Comparing multiple arrays like assignment suggests (getting good results)
 	long length = (1024 * 1024) -1;
 	
-	for (int j = 0; j < sizeof(intarr); j++){
+	for (int j = 0; j < 100; j++){
 	
-		arr = malloc(sizeof(int) * (1024 * 1024));
-	
-		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
-			int val = arr[(i *16) & length]++;
+		int arr[1024*1024];// * (1024 * 1024)); // turn size of int (bytes) to size of int (kilobyte) smaller number to larger number
+		
+		int arrSize = 1024 * 1024;// * (1024 * 1024);
+		
+		//populate array
+		for (int x = 0; x < arrSize; x++){
+			arr[x] = x;
 		}
+	
+		//for main memory
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		for (int i = 0; i < arrSize; i++){
+			int z = arr[i];
+		}
+		
 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
-		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
+		printf("%f seconds\n" , elapsed1);
 		
 		
+		
+		// for cache
 		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
-			arr[(0 *16) & length]++;
+		for (int i = 0; i < arrSize; i++){
+			int z = arr[0];
 		}
+		
 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
-		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
+		printf("%f seconds\n", elapsed1);
 		
-		if (j == 15){
-			break;
-		}
+		
+		
+		
+		//free(arr);
 	}
 	/////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////
+	
+
 	
 	
 
