@@ -96,23 +96,15 @@ char* read(char* string)
     exit(EXIT_SUCCESS);
 }
 
-
-
-
-int main(int argc, char *argv[]){
+// takes in number of times to run the test and get average of (n)
+float getAvgTimeMain(int n){
 
 	struct timespec ts_begin, ts_end;
 	double elapsed1;
+	double totalElapsed = 0;
 	int *arr;
 
-	
-	
-	/////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-	// New Comparing multiple arrays like assignment suggests (getting good results)
-	long length = (1024 * 1024) -1;
-	
-	for (int j = 0; j < 100; j++){
+	for (int i = 0; i < n; i++){
 	
 		int arr[1024*1024];// * (1024 * 1024)); // turn size of int (bytes) to size of int (kilobyte) smaller number to larger number
 		
@@ -125,37 +117,67 @@ int main(int argc, char *argv[]){
 	
 		//for main memory
 		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < arrSize; i++){
-			int z = arr[i];
+		for (int j = 0; j < arrSize; j++){
+			int z = arr[j];
 		}
 		
 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
 		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
-		printf("%f seconds\n" , elapsed1);
+		totalElapsed = totalElapsed + elapsed1;
 		
+	}
+	return(totalElapsed/n); // returning the average time for all results
+}
+
+// takes in number of times to run the test and get average of (n)
+float getAvgTimeCache(int n){
+
+	struct timespec ts_begin, ts_end;
+	double elapsed1;
+	double totalElapsed = 0;
+	int *arr;
+
+	for (int i = 0; i < n; i++){
+	
+		int arr[1024*1024];// * (1024 * 1024)); // turn size of int (bytes) to size of int (kilobyte) smaller number to larger number
 		
+		int arrSize = 1024 * 1024;// * (1024 * 1024);
 		
-		// for cache
+		//populate array
+		for (int x = 0; x < arrSize; x++){
+			arr[x] = x;
+		}
+	
+		//for main memory
 		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < arrSize; i++){
+		for (int j = 0; j < arrSize; j++){
 			int z = arr[0];
 		}
 		
 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
 		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
-		printf("%f seconds\n", elapsed1);
+		totalElapsed = totalElapsed + elapsed1;
 		
-		
-		
-		
-		//free(arr);
 	}
-	/////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////
-	
+	return(totalElapsed/n); // returning the average time for all results
+}
 
+
+
+int main(int argc, char *argv[]){
+
+	int numTimesToAccess = 100;
+
+	float mainTime = getAvgTimeMain(numTimesToAccess);
+	float cacheTime = getAvgTimeCache(numTimesToAccess);
+	float percentFaster = (mainTime/cacheTime) * 100;
+
+	printf("Average time to access main memory is %f seconds\n", mainTime);
+	printf("Average time to access cache is %f seconds\n", cacheTime);
+	
+	printf("Accessing cache is %.0f%% faster than main memory when running %d tests\n", percentFaster, numTimesToAccess);
 	
 	
 
