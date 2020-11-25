@@ -96,99 +96,88 @@ char* read(char* string)
     exit(EXIT_SUCCESS);
 }
 
-int readAndWriteFileByBlock(int block){
-	FILE *in, *out;
-	int blockSize = block;
-	unsigned char *buffer = NULL;
-	buffer = (unsigned char*) malloc(blockSize);
-	size_t bufSize;
+// takes in number of times to run the test and get average of (n)
+float getAvgTimeMain(int n){
+
+	struct timespec ts_begin, ts_end;
+	double elapsed1;
+	double totalElapsed = 0;
+	int *arr;
+
+	for (int i = 0; i < n; i++){
 	
-	if ((in=fopen("readIn.txt", "rb")) == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
+		int arr[1024*1024];// * (1024 * 1024)); // turn size of int (bytes) to size of int (kilobyte) smaller number to larger number
+		
+		int arrSize = 1024 * 1024;// * (1024 * 1024);
+		
+		//populate array
+		for (int x = 0; x < arrSize; x++){
+			arr[x] = x;
+		}
+	
+		//for main memory
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		for (int j = 0; j < arrSize; j++){
+			int z = arr[j];
+		}
+		
+		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
+		totalElapsed = totalElapsed + elapsed1;
+		
 	}
-	
-	if ((out=fopen("writeOut.txt", "wb")) == NULL){
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-	
-	while((bufSize = fread(buffer, sizeof(unsigned char), blockSize, in)) > 0) {
-		fwrite(buffer, sizeof(unsigned char), bufSize, out);
-	}
-	fclose(out);
-	fclose(in);
-	
-	return 0;
-	
+	return(totalElapsed/n); // returning the average time for all results
 }
+
+// takes in number of times to run the test and get average of (n)
+float getAvgTimeCache(int n){
+
+	struct timespec ts_begin, ts_end;
+	double elapsed1;
+	double totalElapsed = 0;
+	int *arr;
+
+	for (int i = 0; i < n; i++){
+	
+		int arr[1024*1024];// * (1024 * 1024)); // turn size of int (bytes) to size of int (kilobyte) smaller number to larger number
+		
+		int arrSize = 1024 * 1024;// * (1024 * 1024);
+		
+		//populate array
+		for (int x = 0; x < arrSize; x++){
+			arr[x] = x;
+		}
+	
+		//for main memory
+		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+		for (int j = 0; j < arrSize; j++){
+			int z = arr[0];
+		}
+		
+		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/1000000000.0);
+		totalElapsed = totalElapsed + elapsed1;
+		
+	}
+	return(totalElapsed/n); // returning the average time for all results
+}
+
 
 
 int main(int argc, char *argv[]){
 
-	struct timespec ts_begin, ts_end;
-	double elapsed1;
-	int *arr;
+	int numTimesToAccess = 100;
 
-	char* cache_block_size = read("cache_alignment");
-	printf("%s", cache_block_size);
+	float mainTime = getAvgTimeMain(numTimesToAccess);
+	float cacheTime = getAvgTimeCache(numTimesToAccess);
+	float percentFaster = (mainTime/cacheTime) * 100;
+
+	printf("Average time to access main memory is %f seconds\n", mainTime);
+	printf("Average time to access cache is %f seconds\n", cacheTime);
 	
-	char* cache_size = read("cache size");
-	printf("%s", cache_size);
-	
-	int intarr[15] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
-	for (int i = 0; i < sizeof(intarr); i++){
-		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		readAndWriteFileByBlock(intarr[i]);
-		clock_gettime(CLOCK_MONOTONIC, &ts_end);
-		
-		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec)/ 1000000000.0);
-		
-		printf("Block Size %d: %f\n", intarr[i], elapsed1);
-		
-		if (i == 15){
-			break;
-		}
-	}
-	
-	printf("\n\n\n");
-	
-	
-	/////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-	// New Comparing multiple arrays like assignment suggests (getting good results)
-	long length = (1024 * 1024) -1;
-	
-	for (int j = 0; j < sizeof(intarr); j++){
-	
-		arr = malloc(sizeof(int) * (1024 * 1024));
-	
-		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
-			int val = arr[(i *16) & length]++;
-		}
-		clock_gettime(CLOCK_MONOTONIC, &ts_end);
-		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
-		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
-		
-		
-		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
-		for (int i = 0; i < (intarr[j] * 1024 * 1024); i++){
-			arr[(0 *16) & length]++;
-		}
-		clock_gettime(CLOCK_MONOTONIC, &ts_end);
-		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
-		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
-		printf("%f nanoseconds at ... %d block size\n", elapsed1, intarr[j]);
-		
-		if (j == 15){
-			break;
-		}
-	}
-	/////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////
+	printf("Accessing cache is %.0f%% faster than main memory when running %d tests\n", percentFaster, numTimesToAccess);
 	
 	
 
