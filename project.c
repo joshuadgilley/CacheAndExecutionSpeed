@@ -72,7 +72,7 @@ char* read(char* string)
         if (!strcmp(subbuff, passedInString)){
         
 		    // assign variables for seperated values
-			char* first_val;
+			
 			char* second_val;
 		
 			// loop through the entire line
@@ -102,7 +102,7 @@ float getAvgTimeMain(int n){
 	struct timespec ts_begin, ts_end;
 	double elapsed1;
 	double totalElapsed = 0;
-	int *arr;
+	
 
 	for (int i = 0; i < n; i++){
 	
@@ -136,7 +136,7 @@ float getAvgTimeCache(int n){
 	struct timespec ts_begin, ts_end;
 	double elapsed1;
 	double totalElapsed = 0;
-	int *arr;
+	
 
 	for (int i = 0; i < n; i++){
 	
@@ -149,11 +149,12 @@ float getAvgTimeCache(int n){
 			arr[x] = x;
 		}
 	
-		//for main memory
+		//for cache memory
 		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
 		for (int j = 0; j < arrSize; j++){
 			int z = arr[0];
 		}
+		
 		
 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
@@ -164,20 +165,65 @@ float getAvgTimeCache(int n){
 	return(totalElapsed/n); // returning the average time for all results
 }
 
+int getCacheSize(){
+
+	struct timespec ts_begin, ts_end;
+ 	double elapsed1;
+ 	int *arr;
+
+	int MAX_CACHE = 4096;
+
+ 	/////////////////////////////////////////////////////////////////////////////
+ 	////////////////////////////////////////////////////////////////////////////
+ 	// New Comparing multiple arrays like assignment suggests (getting good results)
+ 	//long length = (1024 * 1024) -1;
+ 	int j;
+
+ 	for (j = 1; j <= MAX_CACHE; j = j*2){
+
+ 		arr = malloc(sizeof(int) * (1024 * 1024));
+
+ 		
+ 		clock_gettime(CLOCK_MONOTONIC, &ts_begin);
+ 		for (int i = 0; i < (j * 1024 * 1024); i++){
+ 			arr[0]++;
+ 		}
+ 		clock_gettime(CLOCK_MONOTONIC, &ts_end);
+ 		elapsed1 = ts_end.tv_sec - ts_begin.tv_sec;
+ 		elapsed1 += ((ts_end.tv_nsec - ts_begin.tv_nsec));
+
+ 		if (elapsed1 < 1000.0 && elapsed1 > 0.0){
+ 			break;
+ 		} 
+ 	}
+ 	return j;
+}
 
 
 int main(int argc, char *argv[]){
 
 	int numTimesToAccess = 100;
 
+	printf("Calculating time to access main memory...\n");
 	float mainTime = getAvgTimeMain(numTimesToAccess);
+	printf("Complete!\n");
+	
+	printf("Calculating time to access cache...\n");
 	float cacheTime = getAvgTimeCache(numTimesToAccess);
+	printf("Complete!\n");
+	
 	float percentFaster = (mainTime/cacheTime) * 100;
+	
+	printf("Calculating cache size...\n");
+	int cacheSize = getCacheSize();
+	printf("Complete!\n\n");
 
 	printf("Average time to access main memory is %f seconds\n", mainTime);
 	printf("Average time to access cache is %f seconds\n", cacheTime);
 	
 	printf("Accessing cache is %.0f%% faster than main memory when running %d tests\n", percentFaster, numTimesToAccess);
+	
+	printf("Cache Size is: %d\n\n", cacheSize);
 	
 	
 
